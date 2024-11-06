@@ -1,0 +1,13 @@
+{% extends "core/base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1>Welcome to the Game Review Website</h1>
+<p>This platform allows you to browse game reviews, rate games, and interact with the gaming community.</p>
+{% if user.is_authenticated %}
+    <p>Hello, {{ user.username }}! Welcome back.</p>
+{% else %}
+    <p>Please <a href="{% url 'login' %}">log in</a> or <a href="{% url 'register' %}">register</a> to participate.</p>
+{% endif %}
+{% endblock %}
