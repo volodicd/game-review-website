@@ -1,12 +1,12 @@
 {% extends "core/base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}All Games{% endblock %}
 
 {% block content %}
-<h1>Latest Games</h1>
+<h1>All Games</h1>
 
 <ul class="game-list">
-    {% for game in latest_games %}
+    {% for game in games %}
         <li>
             <a href="{% url 'game_detail' game.id %}">
                 <h2>{{ game.title }}</h2>
@@ -21,6 +21,4 @@
 {% if user.is_authenticated and user.role == 'admin' %}
     <a href="{% url 'create_game' %}" class="btn-create">Create New Game</a>
 {% endif %}
-
-<p><a href="{% url 'game_list' %}">View All Games</a></p>  <!-- Link to full game list -->
 {% endblock %}

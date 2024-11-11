@@ -1,0 +1,38 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ game.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ game.title }}</h1>
+
+<div class="game-details">
+    <img src="{{ game.image_url }}" alt="{{ game.title }}" class="game-image">
+
+    <div class="game-info">
+        <p><strong>Description:</strong> {{ game.description }}</p>
+        <p><strong>Release Date:</strong> {{ game.release_date }}</p>
+        <p><strong>Developer:</strong> {{ game.developer }}</p>
+        <p><strong>Genre:</strong> {{ game.genre }}</p>
+        <p><strong>Average Rating:</strong> {{ game.average_rating }} / 5</p>
+    </div>
+</div>
+
+<h2>Reviews</h2>
+{% if reviews %}
+    <ul class="review-list">
+        {% for review in reviews %}
+            <li>
+                <p><strong>{{ review.user.username }}</strong> rated this game {{ review.rating }} / 5</p>
+                <p>{{ review.comment }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No reviews yet. Be the first to review this game!</p>
+{% endif %}
+
+{% if user.is_authenticated and user.role == 'admin' %}
+    <!-- Only show this button if the user is an admin -->
+    <a href="{% url 'edit_game' game.id %}" class="btn-edit">Edit Game</a>
+{% endif %}
+{% endblock %}
