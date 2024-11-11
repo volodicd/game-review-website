@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+
+{% block title %}Delete Game Confirmation{% endblock %}
+
+{% block content %}
+  <h1>Do you want to delete the game: "{{ game.title }}"?</h1>
+
+  <div class="confirmation-buttons">
+    <!-- Yes, Delete Button -->
+    <form method="POST" style="display: inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    </form>
+
+    <!-- No, Go Back Button -->
+    <a href="{% url 'game_detail' game.id %}" class="btn btn-secondary">No, Go Back</a>
+  </div>
+{% endblock %}

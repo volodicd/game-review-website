@@ -3,8 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseForbidden
-from .forms import CustomUserCreationForm
-from .forms import GameForm
+from .forms import CustomUserCreationForm, GameForm
 from .models import Game, Review
 
 
@@ -85,7 +84,7 @@ def create_game(request):
 
 @login_required
 def edit_game(request, game_id):
-    if not request.user.role == 'admin':  # Ensure the user is an admin
+    if not (request.user.role == 'admin' or request.user.role == 'moderator'):
         return HttpResponseForbidden("You are not authorized to edit games.")
 
     game = get_object_or_404(Game, id=game_id)
@@ -99,6 +98,19 @@ def edit_game(request, game_id):
 
     return render(request, 'core/edit_game.html', {'form': form, 'game': game})
 
+
+@login_required
+def delete_game(request, game_id):
+    if request.user.role != 'admin':
+        return HttpResponseForbidden("You are not authorized to delete games.")
+
+    game = get_object_or_404(Game, id=game_id)
+
+    if request.method == 'POST':
+        game.delete()
+        return redirect('home')  # Redirect to home after deletion
+
+    return render(request, 'core/delete_game_confirm.html', {'game': game})
 
 def game_list(request):
     games = Game.objects.all()  # Fetch all games from the database

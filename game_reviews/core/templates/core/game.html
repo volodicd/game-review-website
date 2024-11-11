@@ -31,8 +31,15 @@
     <p>No reviews yet. Be the first to review this game!</p>
 {% endif %}
 
-{% if user.is_authenticated and user.role == 'admin' %}
-    <!-- Only show this button if the user is an admin -->
-    <a href="{% url 'edit_game' game.id %}" class="btn-edit">Edit Game</a>
-{% endif %}
+<div class="game-actions">
+    {% if user.is_authenticated %}
+        {% if user.role == 'moderator' %}
+            <a href="{% url 'edit_game' game.id %}" class="btn btn-primary">Edit Game</a>
+        {% endif %}
+        {% if user.role == 'admin' %}
+            <a href="{% url 'delete_game' game.id %}" class="btn btn-danger">Delete Game</a>
+        {% endif %}
+    {% endif %}
+</div>
+
 {% endblock %}
