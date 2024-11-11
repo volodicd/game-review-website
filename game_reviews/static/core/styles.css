@@ -1,3 +1,5 @@
+/* static/core/styles.css */
+
 /* Basic Reset */
 * {
     margin: 0;
@@ -15,62 +17,46 @@ body {
 /* Top Navigation Bar */
 .topbar {
     background-color: #333;
-    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
 }
 
-.topbar a {
-    float: left;
-    display: block;
+/* Styling for the left side links */
+.left-links a {
     color: #f2f2f2;
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
 }
 
-.topbar a:hover {
+/* Styling for the right side links */
+.right-links {
+    display: flex;
+}
+
+.right-links a {
+    color: #f2f2f2;
+    padding: 14px 16px;
+    text-decoration: none;
+    background-color: #555;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.right-links a:hover {
+    background-color: #04AA6D;
+    color: white;
+}
+
+/* Hover styling for other topbar links */
+.left-links a:hover {
     background-color: #ddd;
     color: black;
 }
 
-/* Active link */
-.topbar a.active {
+.left-links a.active {
     background-color: #04AA6D;
     color: white;
-}
-
-/* Center content */
-.container {
-    margin: 20px auto;
-    max-width: 800px;
-}
-
-/* Form styling */
-form {
-    background: #f4f4f4;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-form input[type="text"],
-form input[type="email"],
-form input[type="password"] {
-    width: 100%;
-    padding: 8px;
-    margin: 8px 0 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-form button {
-    background-color: #333;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-form button:hover {
-    background-color: #04AA6D;
 }

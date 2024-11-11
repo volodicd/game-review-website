@@ -1,3 +1,4 @@
+<!-- core/templates/core/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +10,20 @@
 </head>
 <body>
     <div class="topbar">
-        <a href="{% url 'home' %}">Home</a>
-        {% if user.is_authenticated %}
-            <a href="{% url 'logout' %}">Logout</a>
-        {% else %}
-            <a href="{% url 'register' %}">Register</a>
-            <a href="{% url 'login' %}">Login</a>
-        {% endif %}
+        <div class="left-links">
+            <a href="{% url 'home' %}">Home</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'account_details' %}">Account Details</a>
+            {% endif %}
+        </div>
+        <div class="right-links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="logout">Logout</a>
+            {% else %}
+                <a href="{% url 'register' %}" class="register">Register</a>
+                <a href="{% url 'login' %}" class="login">Login</a>
+            {% endif %}
+        </div>
     </div>
     <div class="container">
         {% block content %}{% endblock %}
