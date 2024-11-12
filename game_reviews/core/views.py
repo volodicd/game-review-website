@@ -5,6 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseForbidden
 from .forms import CustomUserCreationForm, GameForm
 from .models import Game, Review
+from .utils import get_game_info
 
 
 def home(request):
@@ -57,13 +58,26 @@ def critic_dashboard(request):
 
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
-    reviews = game.reviews.all()  # Fetch all reviews related to the game
 
-    context = {
+    # Fetch SteamDB info using the game app_id
+    app_id = game.steam_app_id  # Assuming you store Steam app ID in the game model
+    steam_info = get_game_info(app_id)
+
+    # Fetch reviews for this game
+    reviews = Review.objects.filter(game=game)
+
+    # If steam_info is None, it means there was an issue fetching data
+    if not steam_info:
+        error_message = "Failed to retrieve SteamDB info for this game."
+    else:
+        error_message = None
+
+    return render(request, 'core/game.html', {
         'game': game,
+        'steam_info': steam_info,
         'reviews': reviews,
-    }
-    return render(request, 'core/game.html', context)
+        'error_message': error_message,
+    })
 
 
 @login_required

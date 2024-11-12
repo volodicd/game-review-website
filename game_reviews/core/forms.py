@@ -14,4 +14,4 @@ class CustomAuthenticationForm(AuthenticationForm):
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
-        fields = ['title', 'description', 'release_date', 'developer', 'genre', 'image_url']
+        fields = ['title', 'description', 'release_date', 'developer', 'genre', 'image_url','steam_app_id']

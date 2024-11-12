@@ -23,6 +23,7 @@ class Game(models.Model):
     developer = models.CharField(max_length=255)
     genre = models.CharField(max_length=100)
     image_url = models.URLField(blank=True, null=True)
+    steam_app_id = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.title

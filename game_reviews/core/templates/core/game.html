@@ -17,6 +17,17 @@
     </div>
 </div>
 
+<h2>SteamDB Information</h2>
+{% if steam_info %}
+    <ul>
+        <li><strong>overall score:</strong> {{ steam_info.overall_score }}</li>
+        <li><strong>positive reviews:</strong> {{ steam_info.positive_reviews }}</li>
+        <li><strong>negative reviews:</strong> {{ steam_info.negative_reviews }}</li>
+    </ul>
+{% else %}
+    <p>{{ error_message }}</p>
+{% endif %}
+
 <h2>Reviews</h2>
 {% if reviews %}
     <ul class="review-list">
