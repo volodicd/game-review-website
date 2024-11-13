@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser, Game
+from .models import Comment
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -15,3 +16,10 @@ class GameForm(forms.ModelForm):
     class Meta:
         model = Game
         fields = ['title', 'description', 'release_date', 'developer', 'genre', 'image_url','steam_app_id']
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['comment']
+

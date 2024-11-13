@@ -6,6 +6,9 @@ from django.http import HttpResponseForbidden
 from .forms import CustomUserCreationForm, GameForm
 from .models import Game, Review
 from .utils import get_game_info
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Comment
+from .forms import CommentForm
 
 
 def home(request):
@@ -58,26 +61,32 @@ def critic_dashboard(request):
 
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
+    #steam_info = get_steam_info(game)  # Assuming you have this function
+    reviews = game.reviews.all()  # Assuming the Game model has a related reviews field
 
-    # Fetch SteamDB info using the game app_id
-    app_id = game.steam_app_id  # Assuming you store Steam app ID in the game model
-    steam_info = get_game_info(app_id)
+    # Initialize the comment form
+    comment_form = CommentForm()  # This creates an empty form
 
-    # Fetch reviews for this game
-    reviews = Review.objects.filter(game=game)
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                new_comment = comment_form.save(commit=False)
+                new_comment.user = request.user
+                new_comment.game = game
+                new_comment.save()
+                return redirect('game_detail', game_id=game.id)
+        else:
+            return redirect('login')
 
-    # If steam_info is None, it means there was an issue fetching data
-    if not steam_info:
-        error_message = "Failed to retrieve SteamDB info for this game."
-    else:
-        error_message = None
-
-    return render(request, 'core/game.html', {
+    context = {
         'game': game,
-        'steam_info': steam_info,
+        #'steam_info': steam_info,
         'reviews': reviews,
-        'error_message': error_message,
-    })
+        'comment_form': comment_form,  # Passing comment_form to the template
+        #'error_message': 'Steam information not available' if not steam_info else None,
+    }
+    return render(request, 'core/game.html', context)
 
 
 @login_required
@@ -129,3 +138,43 @@ def delete_game(request, game_id):
 def game_list(request):
     games = Game.objects.all()  # Fetch all games from the database
     return render(request, 'core/game_list.html', {'games': games})
+
+def game(request, game_id):
+    game = get_object_or_404(Game, id=game_id)
+    #steam_info = get_steam_info(game)  # Assuming you have a method for this
+    reviews = game.reviews.all()  # Assuming the Game model has a related reviews field
+
+    # Initialize the comment form
+    comment_form = CommentForm()
+
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                new_comment = comment_form.save(commit=False)
+                new_comment.user = request.user
+                new_comment.game = game
+                new_comment.save()
+                return redirect('game', game_id=game.id)
+        else:
+            # Handle unauthenticated users
+            return redirect('login')
+
+    context = {
+        'game': game,
+        #'steam_info': steam_info,
+        'reviews': reviews,
+        'comment_form': comment_form,
+        #'error_message': 'Steam information not available' if not steam_info else None,
+    }
+    return render(request, 'core/game.html', context)
+
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+
+    # Check if the user is a moderator
+    if request.user.role == 'moderator':
+        comment.delete()
+        return redirect('game_detail', game_id=comment.game.id)  # Redirect to the game page
+    else:
+        return HttpResponseForbidden("You don't have permission to delete this comment.")

@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
-
+from django.contrib.auth.models import User
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -45,3 +45,12 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.game.title} ({self.rating}/5)"
+
+class Comment(models.Model):
+    game = models.ForeignKey('Game', on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Use settings.AUTH_USER_MODEL
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} on {self.game.title}'

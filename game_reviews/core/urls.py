@@ -13,4 +13,5 @@ urlpatterns = [
     path('game/create/', views.create_game, name='create_game'),  # Add this line if missing
     path('game/edit/<int:game_id>', views.edit_game, name='edit_game'),
     path('game/delete/<int:game_id>', views.delete_game, name='delete_game'),
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]
