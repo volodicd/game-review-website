@@ -6,6 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseForbidden
 from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm  # Added CustomUserEditForm for editing critic profile
 from .models import Game, Review, Comment
+from .utils import get_game_info
 
 def home(request):
     latest_games = Game.objects.order_by('-id')[:10]  # Fetch the latest 10 games
@@ -91,6 +92,10 @@ def verify_critic(request):
 
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
+
+    # Fetch Steam information using the Steam App ID
+    steam_info = get_game_info(game.steam_app_id)  # Assuming `steam_app_id` is a field in your Game model
+
     reviews = game.reviews.all()
     comment_form = CommentForm()  # This creates an empty form
 
@@ -108,8 +113,10 @@ def game_detail(request, game_id):
 
     context = {
         'game': game,
+        'steam_info': steam_info,  # Include Steam details in the context
         'reviews': reviews,
         'comment_form': comment_form,  # Passing comment_form to the template
+        'error_message': 'Steam information not available' if not steam_info else None,
     }
     return render(request, 'core/game.html', context)
 
@@ -161,29 +168,7 @@ def game_list(request):
     games = Game.objects.all()  # Fetch all games from the database
     return render(request, 'core/game_list.html', {'games': games})
 
-def game(request, game_id):
-    game = get_object_or_404(Game, id=game_id)
-    reviews = game.reviews.all()  # Assuming the Game model has a related reviews field
-    comment_form = CommentForm()
 
-    if request.method == 'POST':
-        if request.user.is_authenticated:
-            comment_form = CommentForm(request.POST)
-            if comment_form.is_valid():
-                new_comment = comment_form.save(commit=False)
-                new_comment.user = request.user
-                new_comment.game = game
-                new_comment.save()
-                return redirect('game', game_id=game.id)
-        else:
-            return redirect('login')
-
-    context = {
-        'game': game,
-        'reviews': reviews,
-        'comment_form': comment_form,
-    }
-    return render(request, 'core/game.html', context)
 
 @login_required
 def delete_comment(request, comment_id):

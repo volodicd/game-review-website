@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.conf import settings
+from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -8,6 +9,7 @@ class CustomUser(AbstractUser):
         ('moderator', 'Moderator'),
         ('critic', 'Critic'),
         ('user', 'User'),
+
     ]
 
     # Role assigned to the user, determining permissions and access
