@@ -1,0 +1,14 @@
+<!-- core/templates/core/create_review.html -->
+
+{% extends "core/base.html" %}
+
+{% block title %}Create Review for {{ game.title }}{% endblock %}
+
+{% block content %}
+<h1>Create Review for {{ game.title }}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit Review</button>
+</form>
+{% endblock %}

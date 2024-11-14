@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseForbidden
-from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm  # Added CustomUserEditForm for editing critic profile
+from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm, ReviewForm # Added CustomUserEditForm for editing critic profile
 from .models import Game, Review, Comment
 from .utils import get_game_info
 
@@ -48,11 +48,15 @@ def account_details(request):
     }
     return render(request, 'core/account_details.html', context)
 
+# core/views.py
+
 @login_required
 def critic_dashboard(request):
     if request.user.role != 'critic':
         return redirect('home')
-    return render(request, 'core/critic_dashboard.html')
+    reviews = Review.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'core/critic_dashboard.html', {'reviews': reviews})
+
 
 @login_required
 def edit_critic(request):
@@ -90,14 +94,26 @@ def verify_critic(request):
         return HttpResponseForbidden("You are not authorized to verify this profile.")
     return render(request, 'core/verify_critic.html')
 
+
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
+    steam_info = get_game_info(game.steam_app_id)
 
-    # Fetch Steam information using the Steam App ID
-    steam_info = get_game_info(game.steam_app_id)  # Assuming `steam_app_id` is a field in your Game model
+    # Fetch the latest two reviews for the game
+    latest_reviews = game.reviews.order_by('-created_at')[:2]
 
-    reviews = game.reviews.all()
-    comment_form = CommentForm()  # This creates an empty form
+    # Check if the current user is a critic and if they have already reviewed this game
+    is_critic = request.user.is_authenticated and request.user.role == 'critic'
+    user_has_reviewed = False
+    user_review = None
+    if is_critic:
+        try:
+            user_review = Review.objects.get(game=game, user=request.user)
+            user_has_reviewed = True
+        except Review.DoesNotExist:
+            user_has_reviewed = False
+
+    comment_form = CommentForm()
 
     if request.method == 'POST':
         if request.user.is_authenticated:
@@ -113,12 +129,17 @@ def game_detail(request, game_id):
 
     context = {
         'game': game,
-        'steam_info': steam_info,  # Include Steam details in the context
-        'reviews': reviews,
-        'comment_form': comment_form,  # Passing comment_form to the template
+        'steam_info': steam_info,
+        'latest_reviews': latest_reviews,
+        'is_critic': is_critic,
+        'user_has_reviewed': user_has_reviewed,
+        'user_review': user_review,
+        'comment_form': comment_form,
         'error_message': 'Steam information not available' if not steam_info else None,
     }
     return render(request, 'core/game.html', context)
+
+
 
 @login_required
 def create_game(request):
@@ -179,3 +200,29 @@ def delete_comment(request, comment_id):
         return redirect('game_detail', game_id=comment.game.id)  # Redirect to the game page
     else:
         return HttpResponseForbidden("You don't have permission to delete this comment.")
+
+
+def all_reviews(request, game_id):
+    game = get_object_or_404(Game, id=game_id)
+    reviews = game.reviews.order_by('-created_at')
+    return render(request, 'core/all_reviews.html', {'game': game, 'reviews': reviews})
+
+
+@login_required
+def create_review(request, game_id):
+    if request.user.role != 'critic':
+        return HttpResponseForbidden("You are not authorized to create reviews.")
+
+    game = get_object_or_404(Game, id=game_id)
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.user = request.user
+            review.game = game
+            review.save()
+            return redirect('game_detail', game_id=game.id)
+    else:
+        form = ReviewForm()
+
+    return render(request, 'core/create_review.html', {'form': form, 'game': game})

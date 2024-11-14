@@ -1,18 +1,15 @@
+
 {% extends "core/base.html" %}
 
-{% block title %}Critic Dashboard{% endblock %}
+{% block title %}All Reviews for {{ game.title }}{% endblock %}
 
 {% block content %}
-<h1>Critic Dashboard</h1>
-<p>Welcome, {{ user.username }}! Here you can manage your reviews.</p>
+<h1>All Reviews for {{ game.title }}</h1>
 
-
-<h2>Your Reviews</h2>
 <ul class="review-list">
     {% for review in reviews %}
         <li>
-            <a href="{% url 'game_detail' review.game.id %}">{{ review.game.title }}</a>
-            <p><strong>Rating:</strong> {{ review.rating }} / 5</p>
+            <p><strong>{{ review.user.username }}</strong> rated this game {{ review.rating }} / 5</p>
             <p>{{ review.comment }}</p>
             <p><em>Reviewed on: {{ review.created_at|date:"F j, Y" }}</em></p>
         </li>
@@ -20,5 +17,4 @@
         <p>No reviews yet.</p>
     {% endfor %}
 </ul>
-
 {% endblock %}

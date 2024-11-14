@@ -19,5 +19,6 @@ urlpatterns = [
     path('critic/delete_confirm/', views.delete_critic_confirm, name='delete_critic_confirm'), 
     path('critic/verify/', views.verify_critic, name='verify_critic'), 
     path('critic/dashboard/', views.critic_dashboard, name='critic_dashboard'),
-
+    path('game/<int:game_id>/all_reviews/', views.all_reviews, name='all_reviews'),
+    path('game/<int:game_id>/create_review/', views.create_review, name='create_review'),
 ]

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, Game, Comment
+from .models import CustomUser, Game, Comment, Review
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -26,3 +26,17 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['comment']
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        labels = {
+            'rating': 'Your Rating',
+            'comment': 'Review Comment',
+        }
+        widgets = {
+            'rating': forms.Select(choices=[(i, i) for i in range(1, 6)]),  # Rating from 1 to 5
+            'comment': forms.Textarea(attrs={'rows': 4}),
+        }

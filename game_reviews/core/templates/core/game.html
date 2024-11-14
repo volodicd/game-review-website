@@ -29,31 +29,26 @@
 {% endif %}
 
 <h2>Reviews</h2>
-{% if reviews %}
-    <ul class="review-list">
-        {% for review in reviews %}
-            <li>
-                <p><strong>{{ review.user.username }}</strong> rated this game {{ review.rating }} / 5</p>
-                <p>{{ review.comment }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No reviews yet. Be the first to review this game!</p>
-{% endif %}
+<div class="review-section">
+    {% for review in latest_reviews %}
+        <div class="review">
+            <h3>{{ review.user.username }}</h3>
+            <p><strong>Rating:</strong> {{ review.rating }} / 5</p>
+            <p>{{ review.comment }}</p>
+            <p><em>Reviewed on: {{ review.created_at|date:"F j, Y" }}</em></p>
+        </div>
+    {% empty %}
+        <p>No reviews yet.</p>
+    {% endfor %}
 
-<div class="game-actions">
-    {% if user.is_authenticated %}
-        {% if user.role == 'moderator' %}
-            <a href="{% url 'edit_game' game.id %}" class="btn btn-primary">Edit Game</a>
-        {% endif %}
-        {% if user.role == 'admin' %}
-            <a href="{% url 'delete_game' game.id %}" class="btn btn-danger">Delete Game</a>
-        {% endif %}
+    <a href="{% url 'all_reviews' game.id %}" class="btn">View All Reviews</a>
+
+    {% if is_critic %}
+        <a href="{% url 'create_review' game.id %}" class="btn btn-primary">Create Review</a>
     {% endif %}
 </div>
-    
-    
+
+
 
 <h3>Comments</h3>
 {% if game.comments.exists %}
