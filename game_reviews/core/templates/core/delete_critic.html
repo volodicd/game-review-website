@@ -1,0 +1,14 @@
+<!-- core/templates/core/delete_critic.html -->
+<h1>Delete Profile</h1>
+<p>Are you sure you want to delete your profile? This action cannot be undone.</p>
+
+<form action="{% url 'delete_critic_confirm' %}" method="POST" onsubmit="return confirmDelete()">
+    {% csrf_token %}
+    <button type="submit" class="delete-button">Delete Profile</button>
+</form>
+
+<script>
+function confirmDelete() {
+    return confirm("Are you sure you want to delete your profile? This action cannot be undone.");
+}
+</script>

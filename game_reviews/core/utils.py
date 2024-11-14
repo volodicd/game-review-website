@@ -18,7 +18,7 @@ def get_game_info(app_id):
 
     review_data = steamspy_response.json()
 
-    # Extract review statistics
+    
     positive_reviews = review_data.get("positive", 0)
     negative_reviews = review_data.get("negative", 0)
     total_reviews = positive_reviews + negative_reviews
