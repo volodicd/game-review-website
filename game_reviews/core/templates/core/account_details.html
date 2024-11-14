@@ -9,11 +9,19 @@
     <p><strong>Username:</strong> {{ user.username }}</p>
     <p><strong>Email:</strong> {{ user.email }}</p>
     <p><strong>Role:</strong> {{ user.role }}</p>
+    {% if user.role == 'critic' and user.publication %}
+        <p><strong>Publication:</strong> {{ user.publication }}</p>
+    {% endif %}
 </div>
 
 {% if user.role == 'critic' %}
     <h2>Critic Dashboard</h2>
-    <p><a href="{% url 'critic_dashboard' %}">Go to Critic Dashboard</a></p>
+    <ul>
+        <li><a href="{% url 'critic_dashboard' %}">Go to Critic Dashboard</a></li>
+        <li><a href="{% url 'edit_critic' %}">Edit Profile</a></li>
+        <li><a href="{% url 'delete_critic' %}">Delete Profile</a></li>
+        <li><a href="{% url 'verify_critic' %}">Verify Identity</a></li>
+    </ul>
 {% endif %}
 
 <p><a href="{% url 'home' %}">Return to Home</a></p>
