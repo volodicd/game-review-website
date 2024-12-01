@@ -20,7 +20,7 @@ class CustomAuthenticationForm(AuthenticationForm):
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
-        fields = ['title', 'description', 'release_date', 'developer', 'genre', 'image_url', 'steam_app_id']
+        fields = ['title', 'description', 'release_date', 'developer', 'genre', 'image_url', 'steam_app_id','parent_game']
 
 class CommentForm(forms.ModelForm):
     class Meta:

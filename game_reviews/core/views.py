@@ -99,6 +99,8 @@ def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
     steam_info = get_game_info(game.steam_app_id)
 
+    dlcs = game.dlcs.all()
+
     # Fetch the latest two reviews for the game
     latest_reviews = game.reviews.order_by('-created_at')[:2]
 

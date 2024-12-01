@@ -28,6 +28,17 @@
     <p>{{ error_message }}</p>
 {% endif %}
 
+<h2>DLCs</h2>
+<ul>
+    {% for dlc in game.dlcs.all %}
+    <li>
+        <a href="{% url 'game_detail' dlc.id %}">{{ dlc.title }}</a>
+    </li>
+    {% empty %}
+    <li>No DLCs available.</li>
+    {% endfor %}
+</ul>
+
 <h2>Reviews</h2>
 <div class="review-section">
     {% for review in latest_reviews %}
