@@ -7,7 +7,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
-    path('account/', views.account_details, name='account_details'),
+    path('account/<int:user_id>/', views.account_details, name='account_details'),
     path('game/<int:game_id>/', views.game_detail, name='game_detail'),
     path('games/', views.game_list, name='game_list'),
     path('game/create/', views.create_game, name='create_game'),
@@ -21,4 +21,6 @@ urlpatterns = [
     path('critic/dashboard/', views.critic_dashboard, name='critic_dashboard'),
     path('game/<int:game_id>/all_reviews/', views.all_reviews, name='all_reviews'),
     path('game/<int:game_id>/create_review/', views.create_review, name='create_review'),
+    path('admin/user_list/', views.user_list, name='user_list'),
+    path('admin/update_role/<int:user_id>/', views.update_user_role, name='update_user_role'),
 ]

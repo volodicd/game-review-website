@@ -1,11 +1,10 @@
-# core/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseForbidden
-from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm, ReviewForm # Added CustomUserEditForm for editing critic profile
-from .models import Game, Review, Comment
+from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm, ReviewForm, RoleChangeForm
+from .models import Game, Review, Comment, CustomUser
 from .utils import get_game_info
 
 def home(request):
@@ -16,14 +15,26 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            # Save the user without committing to the database yet
+            user = form.save(commit=False)
+
+            # Assign 'admin' role if this is the first user (id=1), otherwise 'user' role
+            if CustomUser.objects.count() == 0:
+                user.role = 'admin'  # Assign 'admin' to the first user
+            else:
+                user.role = 'user'   # Assign 'user' to all other users
+
+            user.save()  # Now save the user to the database
+
+            # Authenticate and log in the user
             user = authenticate(username=form.cleaned_data['username'],
-                                password=form.cleaned_data['password1'])
+                                 password=form.cleaned_data['password1'])
             if user is not None:
                 login(request, user)
                 return redirect('home')
     else:
         form = CustomUserCreationForm()
+
     return render(request, 'core/register.html', {'form': form})
 
 def user_login(request):
@@ -41,14 +52,33 @@ def user_logout(request):
     return redirect('home')
 
 @login_required
-def account_details(request):
-    context = {
-        'user': request.user,
-        'is_critic': request.user.role == 'critic'
-    }
-    return render(request, 'core/account_details.html', context)
+def account_details(request, user_id):
+    user = CustomUser.objects.get(id=user_id)
+    is_critic = user.role == 'critic'
 
-# core/views.py
+    # Check if the logged-in user is an admin
+    if request.user.role == 'admin':
+        if request.method == 'POST':
+            form = RoleChangeForm(request.POST, instance=user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'User role has been updated to {user.role}.')
+                return redirect('account_details', user_id=user.id)
+        else:
+            form = RoleChangeForm(instance=user)
+
+        context = {
+            'user': user,
+            'is_critic': is_critic,
+            'form': form,
+        }
+    else:
+        context = {
+            'user': user,
+            'is_critic': is_critic,
+        }
+
+    return render(request, 'core/account_details.html', context)
 
 @login_required
 def critic_dashboard(request):
@@ -57,12 +87,11 @@ def critic_dashboard(request):
     reviews = Review.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'core/critic_dashboard.html', {'reviews': reviews})
 
-
 @login_required
 def edit_critic(request):
     if request.user.role != 'critic':
         return HttpResponseForbidden("You are not authorized to edit this profile.")
-    
+
     if request.method == 'POST':
         form = CustomUserEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -70,7 +99,7 @@ def edit_critic(request):
             return redirect('account_details')
     else:
         form = CustomUserEditForm(instance=request.user)
-        
+
     return render(request, 'core/edit_critic.html', {'form': form})
 
 @login_required
@@ -83,7 +112,7 @@ def delete_critic(request):
 def delete_critic_confirm(request):
     if request.user.role != 'critic':
         return HttpResponseForbidden("You are not authorized to delete this profile.")
-    
+
     # Delete the critic's account
     request.user.delete()
     return redirect('home')  # Redirect to the homepage or another appropriate page
@@ -94,12 +123,19 @@ def verify_critic(request):
         return HttpResponseForbidden("You are not authorized to verify this profile.")
     return render(request, 'core/verify_critic.html')
 
-
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
     steam_info = get_game_info(game.steam_app_id)
 
-    dlcs = game.dlcs.all()
+    # Check if the game is a DLC or a base game
+    if game.parent_game:
+        # If it's a DLC, we don't show further DLCs, but show the parent game
+        parent_game = game.parent_game
+        dlcs = []  # No further DLCs for this DLC
+    else:
+        # If it's a base game, fetch all DLCs (children) related to this base game
+        parent_game = None
+        dlcs = Game.objects.filter(parent_game=game)
 
     # Fetch the latest two reviews for the game
     latest_reviews = game.reviews.order_by('-created_at')[:2]
@@ -140,8 +176,6 @@ def game_detail(request, game_id):
         'error_message': 'Steam information not available' if not steam_info else None,
     }
     return render(request, 'core/game.html', context)
-
-
 
 @login_required
 def create_game(request):
@@ -191,8 +225,6 @@ def game_list(request):
     games = Game.objects.all()  # Fetch all games from the database
     return render(request, 'core/game_list.html', {'games': games})
 
-
-
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
@@ -203,12 +235,10 @@ def delete_comment(request, comment_id):
     else:
         return HttpResponseForbidden("You don't have permission to delete this comment.")
 
-
 def all_reviews(request, game_id):
     game = get_object_or_404(Game, id=game_id)
     reviews = game.reviews.order_by('-created_at')
     return render(request, 'core/all_reviews.html', {'game': game, 'reviews': reviews})
-
 
 @login_required
 def create_review(request, game_id):
@@ -228,3 +258,39 @@ def create_review(request, game_id):
         form = ReviewForm()
 
     return render(request, 'core/create_review.html', {'form': form, 'game': game})
+
+
+@login_required
+def user_list(request):
+    # Only allow users with 'admin' role to access this page
+    if request.user.role != 'admin':
+        return HttpResponseForbidden("You are not authorized to access this page.")
+
+    # Optionally, you can fetch all users or perform any other logic for the admin dashboard
+    users = CustomUser.objects.all()
+
+    context = {
+        'users': users,
+    }
+
+    return render(request, 'core/user_list.html', context)
+
+
+
+@login_required
+def update_user_role(request, user_id):
+    if request.user.role != 'admin':
+        return redirect('home')  # Redirect non-admin users
+
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    if request.method == 'POST':
+        form = RoleChangeForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'User role has been updated to {user.role}.')
+            return redirect('admin_dashboard')  # Redirect back to the admin dashboard
+    else:
+        form = RoleChangeForm(instance=user)
+
+    return render(request, 'core/update_user_role.html', {'form': form, 'user': user})

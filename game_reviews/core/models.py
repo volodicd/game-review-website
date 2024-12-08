@@ -1,51 +1,60 @@
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
+# User model
 class CustomUser(AbstractUser):
+
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('moderator', 'Moderator'),
-        ('critic', 'Critic'),
-        ('user', 'User'),
+            ('admin', 'Admin'),
+            ('moderator', 'Moderator'),
+            ('critic', 'Critic'),
+            ('user', 'User'),
 
-    ]
+        ]
 
-    # Role assigned to the user, determining permissions and access
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    username = models.CharField(max_length=255, unique=True)
+    image = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, unique=True)
+    publication = models.CharField(max_length=255, null=True, blank=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+    description = models.CharField(max_length=255, null=True, blank=True)
+    role = models.CharField(max_length=255,choices=ROLE_CHOICES, default='user')
+    first_name = models.CharField(max_length=30, blank=True, null=True)  # Make it optional
+    last_name = models.CharField(max_length=30, blank=True, null=True)  # Make it optional
 
-    # Profile image for critics
-    image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
-
-    # Description field for critics to share their background or specialties
-    description = models.TextField(blank=True, null=True)
-
-    # The publication or affiliation of the critic
-    publication = models.CharField(max_length=255, blank=True, null=True)
+    # Set the field used for authentication
+    USERNAME_FIELD = 'username'  # This should be 'username' since you want to use it for login
+    REQUIRED_FIELDS = ['email']  # You can add other fields required for creating superusers
 
     def __str__(self):
         return self.username
 
-    # Property to check if the user is a critic
-    @property
-    def is_critic(self):
-        return self.role == 'critic'
 
-
+# Game model
 class Game(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    release_date = models.DateField()
     developer = models.CharField(max_length=255)
-    genre = models.CharField(max_length=100)
-    image_url = models.URLField(blank=True, null=True)
+    publisher = models.CharField(max_length=255)
+    release_date = models.DateField()
+    rating = models.BooleanField(default=False)  # Whether the game is rated
+    age_rating = models.IntegerField()
+    image_url = models.URLField()
+    video_url = models.URLField(null=True, blank=True)
+    file_url = models.URLField(null=True, blank=True)
+    platform = models.ManyToManyField('Platform', through='GamePlatform', blank=True)
+    category = models.ManyToManyField('Category', through='GameCategory', blank=True)
+    tags = models.ManyToManyField('Tag', through='GameTag', blank=True)
     steam_app_id = models.IntegerField(blank=True, null=True)
-    parent_game = models.ForeignKey('self', on_delete=models.SET_NULL,
-    null=True, blank=True, related_name="dlcs")
+    parent_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
+    genre = models.TextField(max_length=100)
+
 
     def __str__(self):
         return self.title
+
 
     # Property to calculate the average rating for the game
     @property
@@ -55,23 +64,76 @@ class Game(models.Model):
             return sum(review.rating for review in reviews) / reviews.count()
         return 0
 
-
-class Review(models.Model):
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='reviews')  # Link to Game model
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Link to CustomUser
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])  # Rating from 1 to 5
-    comment = models.TextField()  # Review comment
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp for review creation
+# Comment model
+class Comment(models.Model):
+    comment = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    edited = models.BooleanField(default=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.user.username} - {self.game.title} ({self.rating}/5)"
+        return f"Comment by {self.user.username} on {self.game.title}"
 
 
-class Comment(models.Model):
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+# Like model
+class Like(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+
+
+# Review model
+class Review(models.Model):
     comment = models.TextField()
+    title = models.CharField(max_length=255)
+    helpful_votes = models.IntegerField()
+    report_count = models.IntegerField()
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} on {self.game.title}'
+        return self.title
+
+
+# Tag model
+class Tag(models.Model):
+    tag_name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.tag_name
+
+
+# Category model
+class Category(models.Model):
+    category_name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.category_name
+
+
+# Platform model
+class Platform(models.Model):
+    platform_name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.platform_name
+
+
+# Many-to-Many Relationships
+class GameTag(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+
+
+class GameCategory(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+
+class GamePlatform(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+

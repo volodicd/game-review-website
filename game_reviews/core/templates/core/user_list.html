@@ -1,0 +1,31 @@
+<!-- user_list.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1>Welcome to the Admin Dashboard</h1>
+
+<h2>All Users</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Username</th>
+    <th>Role</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for user in users %}
+  <tr>
+    <td>{{ user.username }}</td>
+    <td>{{ user.role }}</td>
+    <td>
+      <a href="{% url 'account_details' user.id %}">View</a> |
+      <a href="{% url 'edit_user_role' user.id %}">Edit Role</a>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

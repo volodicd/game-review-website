@@ -24,5 +24,13 @@
     </ul>
 {% endif %}
 
+{% if user != request.user and request.user.role == 'admin' %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update Role</button>
+</form>
+{% endif %}
+
 <p><a href="{% url 'home' %}">Return to Home</a></p>
 {% endblock %}
