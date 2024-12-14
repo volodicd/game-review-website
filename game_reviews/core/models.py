@@ -87,8 +87,8 @@ class Like(models.Model):
 class Review(models.Model):
     comment = models.TextField()
     title = models.CharField(max_length=255)
-    helpful_votes = models.IntegerField()
-    report_count = models.IntegerField()
+    helpful_votes = models.IntegerField(null=True, blank=True, default=None)
+    report_count = models.IntegerField(default=0)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='reviews')
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
