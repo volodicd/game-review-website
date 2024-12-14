@@ -62,21 +62,36 @@
 
 
 <h3>Comments</h3>
-{% if game.comments.exists %}
+{% if comments %}
     <ul>
-        {% for comment in game.comments.all %}
+        {% for comment in comments %}
             <li>
                 <p><strong>{{ comment.user.username }}</strong>:</p>
                 <p>{{ comment.comment }}</p>
-                <p><small>Posted on {{ comment.created_at }}</small></p>
-                
-                <!-- Display delete button only for moderators -->
+                <p><small>Posted on {{ comment.created }}</small></p>
+
+                <!-- Display delete button for moderators -->
                 {% if user.is_authenticated and user.role == 'moderator' %}
                     <form action="{% url 'delete_comment' comment.id %}" method="post" style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                     </form>
                 {% endif %}
+
+                <!-- Display replies -->
+                {% with comment.replies.all as replies %}
+                    {% if replies %}
+                        <ul>
+                            {% for reply in replies %}
+                                <li>
+                                    <p><strong>{{ reply.user.username }}</strong>:</p>
+                                    <p>{{ reply.comment }}</p>
+                                    <p><small>Posted on {{ reply.created }}</small></p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
             </li>
         {% endfor %}
     </ul>

@@ -130,18 +130,16 @@ def game_detail(request, game_id):
 
     # Check if the game is a DLC or a base game
     if game.parent_game:
-        # If it's a DLC, we don't show further DLCs, but show the parent game
         parent_game = game.parent_game
-        dlcs = []  # No further DLCs for this DLC
+        dlcs = []
     else:
-        # If it's a base game, fetch all DLCs (children) related to this base game
         parent_game = None
         dlcs = Game.objects.filter(parent_game=game)
 
-    # Fetch the latest two reviews for the game
+    # Fetch the latest two reviews
     latest_reviews = game.reviews.order_by('-created_at')[:2]
 
-    # Check if the current user is a critic and if they have already reviewed this game
+    # Check if the user is a critic and has reviewed
     is_critic = request.user.is_authenticated and request.user.role == 'critic'
     user_has_reviewed = False
     user_review = None
@@ -150,10 +148,14 @@ def game_detail(request, game_id):
             user_review = Review.objects.get(game=game, user=request.user)
             user_has_reviewed = True
         except Review.DoesNotExist:
-            user_has_reviewed = False
+            pass
+
+    # Fetch top-level comments (comments without a parent)
+    comments = Comment.objects.filter(game=game, parent__isnull=True).select_related('user')
 
     comment_form = CommentForm()
 
+    # Handle comment submission
     if request.method == 'POST':
         if request.user.is_authenticated:
             comment_form = CommentForm(request.POST)
@@ -173,6 +175,7 @@ def game_detail(request, game_id):
         'is_critic': is_critic,
         'user_has_reviewed': user_has_reviewed,
         'user_review': user_review,
+        'comments': comments,  # Pass top-level comments
         'comment_form': comment_form,
         'error_message': 'Steam information not available' if not steam_info else None,
     }
