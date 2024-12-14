@@ -21,6 +21,6 @@ urlpatterns = [
     path('critic/dashboard/', views.critic_dashboard, name='critic_dashboard'),
     path('game/<int:game_id>/all_reviews/', views.all_reviews, name='all_reviews'),
     path('game/<int:game_id>/create_review/', views.create_review, name='create_review'),
-    path('admin/user_list/', views.user_list, name='user_list'),
-    path('admin/update_role/<int:user_id>/', views.update_user_role, name='update_user_role'),
+    path('adminas/user_list/', views.user_list, name='user_list'),
+    path('adminas/update_role/<int:user_id>/', views.update_user_role, name='update_user_role'),
 ]

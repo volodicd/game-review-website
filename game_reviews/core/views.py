@@ -285,12 +285,18 @@ def update_user_role(request, user_id):
 
     user = get_object_or_404(CustomUser, id=user_id)
 
+    # Check if the user is the first user (superuser)
+    first_user = CustomUser.objects.order_by('id').first()
+    if user.id == first_user.id:
+        messages.error(request, "This user is a superuser, and their role can't be changed.")
+        return redirect('user_list')  # Redirect back to the user list page
+
     if request.method == 'POST':
         form = RoleChangeForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, f'User role has been updated to {user.role}.')
-            return redirect('admin_dashboard')  # Redirect back to the admin dashboard
+            return redirect('user_list')  # Redirect back to the admin dashboard
     else:
         form = RoleChangeForm(instance=user)
 

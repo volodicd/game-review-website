@@ -22,7 +22,7 @@
     <td>{{ user.role }}</td>
     <td>
       <a href="{% url 'account_details' user.id %}">View</a> |
-      <a href="{% url 'edit_user_role' user.id %}">Edit Role</a>
+      <a href="{% url 'update_user_role' user.id %}">Edit Role</a>
     </td>
   </tr>
   {% endfor %}
