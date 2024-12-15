@@ -17,9 +17,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=
-      - POSTGRES_USER=
-      - POSTGRES_PASSWORD=
+      - POSTGRES_DB=game_review_db
+      - POSTGRES_USER=DereQ
+      - POSTGRES_PASSWORD=12345678
 
 volumes:
   postgres_data:
