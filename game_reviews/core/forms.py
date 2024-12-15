@@ -34,13 +34,15 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 class GameForm(forms.ModelForm):
     class Meta:
+
         model = Game
 
-        def clean_image(self):
-            image = self.cleaned_data.get('image')
-            if image:
-                image.name = slugify(os.path.basename(image.name))[:50]  # Shorten file name
-            return image
+        def save(self, commit=True):
+            instance = super().save(commit=False)
+            print(f"Saving instance with image: {instance.image}")  # Debug
+            if commit:
+                instance.save()
+            return instance
 
         fields = [
             'title', 'description', 'release_date', 'developer', 'publisher',

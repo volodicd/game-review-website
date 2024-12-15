@@ -6,7 +6,12 @@
 <h1>{{ game.title }}</h1>
 
 <div class="game-details">
-    <img src="{{ game.image_url }}" alt="{{ game.title }}" class="game-image">
+    {% if game.image %}
+        <img src="{{ game.image.url }}" alt="{{ game.title }}" class="game-image" style="max-width: 300px; height: auto;">
+    {% else %}
+        <p>No image available</p>
+    {% endif %}
+
 
     <div class="game-info">
         <p><strong>Description:</strong> {{ game.description }}</p>

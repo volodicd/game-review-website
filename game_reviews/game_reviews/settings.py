@@ -100,18 +100,22 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Media Files (For Uploaded Files)
-DEFAULT_FILE_STORAGE = 'core.gcloud.GoogleCloudMediaFileStorage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+DEFAULT_FILE_STORAGE = 'game_reviews.gcloud.GoogleCloudMediaFileStorage'
+
+GS_FILE_OVERWRITE = False
 
 GS_PROJECT_ID = os.getenv('GS_PROJECT_ID')
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
+GS_LOCATION = 'uploads'
 
-MEDIA_ROOT = "media/"
+MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_LOCATION}/"
+
+
+MEDIA_ROOT = "media/uploads/"
 UPLOAD_ROOT = 'media/uploads/'
-MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
 
-
-GOOGLE_CREDENTIALS_PATH = '../credentials/google-cloud-credentials.json'
+GOOGLE_CREDENTIALS_PATH = 'credentials/google-cloud-credentials.json'
 # Ensure GOOGLE_CREDENTIALS_PATH is properly loaded
 if GOOGLE_CREDENTIALS_PATH:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
@@ -119,11 +123,6 @@ if GOOGLE_CREDENTIALS_PATH:
     )
 else:
     raise ValueError("GOOGLE_CREDENTIALS_PATH environment variable is not set.")
-
-# Configure Default Storage Backend
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_LOCATION = 'uploads/'
-GS_FILE_OVERWRITE = False
 
 # Default Primary Key Field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
