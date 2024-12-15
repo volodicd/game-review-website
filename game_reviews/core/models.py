@@ -3,16 +3,16 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+
 # User model
 class CustomUser(AbstractUser):
-
     ROLE_CHOICES = [
-            ('admin', 'Admin'),
-            ('moderator', 'Moderator'),
-            ('critic', 'Critic'),
-            ('user', 'User'),
+        ('admin', 'Admin'),
+        ('moderator', 'Moderator'),
+        ('critic', 'Critic'),
+        ('user', 'User'),
 
-        ]
+    ]
 
     username = models.CharField(max_length=255, unique=True)
     image = models.CharField(max_length=255, null=True, blank=True)
@@ -20,7 +20,7 @@ class CustomUser(AbstractUser):
     publication = models.CharField(max_length=255, null=True, blank=True)
     last_login = models.DateTimeField(null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
-    role = models.CharField(max_length=255,choices=ROLE_CHOICES, default='user')
+    role = models.CharField(max_length=255, choices=ROLE_CHOICES, default='user')
     first_name = models.CharField(max_length=30, blank=True, null=True)  # Make it optional
     last_name = models.CharField(max_length=30, blank=True, null=True)  # Make it optional
 
@@ -33,28 +33,32 @@ class CustomUser(AbstractUser):
 
 
 # Game model
+from django.core.files.storage import default_storage
+
+
 class Game(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     developer = models.CharField(max_length=255)
     publisher = models.CharField(max_length=255)
     release_date = models.DateField()
-    rating = models.BooleanField(default=False)  # Whether the game is rated
     age_rating = models.IntegerField()
-    image_url = models.URLField()
-    video_url = models.URLField(null=True, blank=True)
-    file_url = models.URLField(null=True, blank=True)
+    image = models.ImageField(upload_to='games/images/', null=True, blank=True)  # For uploaded images
+    video = models.FileField(upload_to='games/videos/', null=True, blank=True)  # For uploaded videos
+    file = models.FileField(upload_to='games/files/', null=True, blank=True)  # For uploaded files
     platform = models.ManyToManyField('Platform', through='GamePlatform', blank=True)
     category = models.ManyToManyField('Category', through='GameCategory', blank=True)
     tags = models.ManyToManyField('Tag', through='GameTag', blank=True)
     steam_app_id = models.IntegerField(blank=True, null=True)
     parent_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
-    genre = models.TextField(max_length=100)
+    genre = models.TextField(max_length=255)
 
 
     def __str__(self):
         return self.title
 
+    def __str__(self):
+        return self.title
 
     # Property to calculate the average rating for the game
     @property
@@ -63,6 +67,7 @@ class Game(models.Model):
         if reviews:
             return sum(review.rating for review in reviews) / reviews.count()
         return 0
+
 
 # Comment model
 class Comment(models.Model):
@@ -136,4 +141,3 @@ class GameCategory(models.Model):
 class GamePlatform(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
-

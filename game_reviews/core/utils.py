@@ -1,3 +1,20 @@
+from django.core.files.storage import default_storage
+
+
+def upload_to_storage(file):
+    """
+    Uploads a file to the default storage backend and returns its URL.
+    """
+    try:
+        # Save the file to the storage backend
+        file_path = default_storage.save(file.name, file)
+        # Generate the URL
+        file_url = default_storage.url(file_path)
+        return file_url
+    except Exception as e:
+        raise ValueError(f"Failed to upload file: {e}")
+
+
 import requests
 
 
@@ -18,7 +35,6 @@ def get_game_info(app_id):
 
     review_data = steamspy_response.json()
 
-    
     positive_reviews = review_data.get("positive", 0)
     negative_reviews = review_data.get("negative", 0)
     total_reviews = positive_reviews + negative_reviews
@@ -30,5 +46,3 @@ def get_game_info(app_id):
         "total_reviews": total_reviews,
         "overall_score": f"{overall_score:.2f}%"
     }
-
-

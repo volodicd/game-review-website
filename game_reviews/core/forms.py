@@ -2,10 +2,12 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser, Game, Comment, Review
 
+
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'password1', 'password2')
+
 
 class CustomUserEditForm(forms.ModelForm):
     class Meta:
@@ -25,25 +27,14 @@ class CustomAuthenticationForm(AuthenticationForm):
         model = CustomUser
         fields = ('username', 'password')
 
+
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
         fields = [
-            'title',
-            'description',
-            'release_date',
-            'developer',
-            'publisher',
-            'genre',
-            'image_url',
-            'video_url',
-            'file_url',
-            'steam_app_id',
-            'parent_game',
-            'age_rating',
-            'platform',
-            'category',
-            'tags'
+            'title', 'description', 'release_date', 'developer', 'publisher',
+            'genre', 'image', 'video', 'file', 'steam_app_id', 'parent_game',
+            'age_rating', 'platform', 'category', 'tags'
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
@@ -51,7 +42,9 @@ class GameForm(forms.ModelForm):
             'tags': forms.SelectMultiple(),
             'category': forms.SelectMultiple(),
             'platform': forms.SelectMultiple(),
+            'genre': forms.Textarea(attrs={'rows': 2, 'maxlength': '255'}),
         }
+
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -91,3 +84,7 @@ class RoleChangeForm(forms.ModelForm):
     ]
 
     role = forms.ChoiceField(choices=ROLE_CHOICES)
+
+
+class FileUploadForm(forms.Form):
+    file = forms.FileField(label="Choose a File")

@@ -4,13 +4,15 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.http import HttpResponseForbidden
-from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm, ReviewForm, RoleChangeForm
+from .forms import CustomUserCreationForm, GameForm, CustomUserEditForm, CommentForm, ReviewForm, RoleChangeForm, FileUploadForm
 from .models import Game, Review, Comment, CustomUser
-from .utils import get_game_info
+from .utils import get_game_info, upload_to_storage
+
 
 def home(request):
     latest_games = Game.objects.order_by('-id')[:10]  # Fetch the latest 10 games
     return render(request, 'core/home.html', {'latest_games': latest_games})
+
 
 def register(request):
     if request.method == 'POST':
@@ -23,13 +25,13 @@ def register(request):
             if CustomUser.objects.count() == 0:
                 user.role = 'admin'  # Assign 'admin' to the first user
             else:
-                user.role = 'user'   # Assign 'user' to all other users
+                user.role = 'user'  # Assign 'user' to all other users
 
             user.save()  # Now save the user to the database
 
             # Authenticate and log in the user
             user = authenticate(username=form.cleaned_data['username'],
-                                 password=form.cleaned_data['password1'])
+                                password=form.cleaned_data['password1'])
             if user is not None:
                 login(request, user)
                 return redirect('home')
@@ -37,6 +39,7 @@ def register(request):
         form = CustomUserCreationForm()
 
     return render(request, 'core/register.html', {'form': form})
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -48,9 +51,11 @@ def user_login(request):
         form = AuthenticationForm()
     return render(request, 'core/login.html', {'form': form})
 
+
 def user_logout(request):
     logout(request)
     return redirect('home')
+
 
 @login_required
 def account_details(request, user_id):
@@ -81,12 +86,14 @@ def account_details(request, user_id):
 
     return render(request, 'core/account_details.html', context)
 
+
 @login_required
 def critic_dashboard(request):
     if request.user.role != 'critic':
         return redirect('home')
     reviews = Review.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'core/critic_dashboard.html', {'reviews': reviews})
+
 
 @login_required
 def edit_critic(request):
@@ -103,11 +110,13 @@ def edit_critic(request):
 
     return render(request, 'core/edit_critic.html', {'form': form})
 
+
 @login_required
 def delete_critic(request):
     if request.user.role != 'critic':
         return HttpResponseForbidden("You are not authorized to delete this profile.")
     return render(request, 'core/delete_critic.html')
+
 
 @login_required
 def delete_critic_confirm(request):
@@ -118,11 +127,13 @@ def delete_critic_confirm(request):
     request.user.delete()
     return redirect('home')  # Redirect to the homepage or another appropriate page
 
+
 @login_required
 def verify_critic(request):
     if request.user.role != 'critic':
         return HttpResponseForbidden("You are not authorized to verify this profile.")
     return render(request, 'core/verify_critic.html')
+
 
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
@@ -181,20 +192,33 @@ def game_detail(request, game_id):
     }
     return render(request, 'core/game.html', context)
 
+
 @login_required
 def create_game(request):
     if not request.user.role == 'admin':  # Ensure only admins can access this view
         return HttpResponseForbidden("You are not authorized to create games.")
 
     if request.method == 'POST':
-        form = GameForm(request.POST)
+        form = GameForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            game = form.save(commit=False)
+
+            # Handle file uploads and save URLs in the game instance
+            if 'image' in request.FILES:
+                game.image = upload_to_storage(request.FILES['image'])
+            if 'video' in request.FILES:
+                game.video = upload_to_storage(request.FILES['video'])
+            if 'file' in request.FILES:
+                game.file = upload_to_storage(request.FILES['file'])
+
+            game.save()  # Save the game instance
+            form.save_m2m()  # Save many-to-many relationships
             return redirect('home')  # Redirect to home after saving
     else:
         form = GameForm()
 
     return render(request, 'core/create_game.html', {'form': form})
+
 
 @login_required
 def edit_game(request, game_id):
@@ -212,6 +236,7 @@ def edit_game(request, game_id):
 
     return render(request, 'core/edit_game.html', {'form': form, 'game': game})
 
+
 @login_required
 def delete_game(request, game_id):
     if request.user.role != 'admin':
@@ -225,9 +250,11 @@ def delete_game(request, game_id):
 
     return render(request, 'core/delete_game_confirm.html', {'game': game})
 
+
 def game_list(request):
     games = Game.objects.all()  # Fetch all games from the database
     return render(request, 'core/game_list.html', {'games': games})
+
 
 @login_required
 def delete_comment(request, comment_id):
@@ -239,10 +266,12 @@ def delete_comment(request, comment_id):
     else:
         return HttpResponseForbidden("You don't have permission to delete this comment.")
 
+
 def all_reviews(request, game_id):
     game = get_object_or_404(Game, id=game_id)
     reviews = game.reviews.order_by('-created_at')
     return render(request, 'core/all_reviews.html', {'game': game, 'reviews': reviews})
+
 
 @login_required
 def create_review(request, game_id):
@@ -280,7 +309,6 @@ def user_list(request):
     return render(request, 'core/user_list.html', context)
 
 
-
 @login_required
 def update_user_role(request, user_id):
     if request.user.role != 'admin':
@@ -304,3 +332,23 @@ def update_user_role(request, user_id):
         form = RoleChangeForm(instance=user)
 
     return render(request, 'core/update_user_role.html', {'form': form, 'user': user})
+
+
+def upload_file(request):
+    if request.method == "POST":
+        form = FileUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['file']
+            uploaded_file.name  # Name of the file
+
+            # Save the file (Google Cloud Storage handles the upload automatically)
+            try:
+                uploaded_file.save()
+                messages.success(request, "File uploaded successfully!")
+            except Exception as e:
+                messages.error(request, f"Error: {str(e)}")
+            return redirect('upload_file')
+    else:
+        form = FileUploadForm()
+
+    return render(request, 'upload_file.html', {'form': form})
