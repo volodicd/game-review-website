@@ -101,13 +101,17 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Media Files (For Uploaded Files)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+DEFAULT_FILE_STORAGE = 'core.gcloud.GoogleCloudMediaFileStorage'
 
-# Google Cloud Storage Configuration
-GOOGLE_CREDENTIALS_PATH = 'credentials/google-cloud-credentials.json'
+GS_PROJECT_ID = os.getenv('GS_PROJECT_ID')
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
+MEDIA_ROOT = "media/"
+UPLOAD_ROOT = 'media/uploads/'
+MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+
+
+GOOGLE_CREDENTIALS_PATH = '../credentials/google-cloud-credentials.json'
 # Ensure GOOGLE_CREDENTIALS_PATH is properly loaded
 if GOOGLE_CREDENTIALS_PATH:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
