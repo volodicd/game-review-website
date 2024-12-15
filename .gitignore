@@ -7,4 +7,5 @@ media/
 *.log
 *.migrations/ 
 .history/
+credentials/*.json
 

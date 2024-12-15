@@ -195,25 +195,14 @@ def game_detail(request, game_id):
 
 @login_required
 def create_game(request):
-    if not request.user.role == 'admin':  # Ensure only admins can access this view
+    if not request.user.role == 'admin':
         return HttpResponseForbidden("You are not authorized to create games.")
 
     if request.method == 'POST':
-        form = GameForm(request.POST, request.FILES)
+        form = GameForm(request.POST, request.FILES)  # Include request.FILES
         if form.is_valid():
-            game = form.save(commit=False)
-
-            # Handle file uploads and save URLs in the game instance
-            if 'image' in request.FILES:
-                game.image = upload_to_storage(request.FILES['image'])
-            if 'video' in request.FILES:
-                game.video = upload_to_storage(request.FILES['video'])
-            if 'file' in request.FILES:
-                game.file = upload_to_storage(request.FILES['file'])
-
-            game.save()  # Save the game instance
-            form.save_m2m()  # Save many-to-many relationships
-            return redirect('home')  # Redirect to home after saving
+            game = form.save()  # Automatically handles uploaded files
+            return redirect('home')
     else:
         form = GameForm()
 

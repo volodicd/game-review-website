@@ -51,7 +51,7 @@ class Game(models.Model):
     tags = models.ManyToManyField('Tag', through='GameTag', blank=True)
     steam_app_id = models.IntegerField(blank=True, null=True)
     parent_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
-    genre = models.TextField(max_length=255)
+    genre = models.TextField(max_length=255, default='empty')
 
 
     def __str__(self):
@@ -92,7 +92,7 @@ class Like(models.Model):
 class Review(models.Model):
     comment = models.TextField()
     title = models.CharField(max_length=255)
-    helpful_votes = models.IntegerField(null=True, blank=True, default=None)
+    helpful_votes = models.IntegerField(null=True, blank=True, default=0)
     report_count = models.IntegerField(default=0)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='reviews')

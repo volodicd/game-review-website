@@ -23,4 +23,5 @@ urlpatterns = [
     path('game/<int:game_id>/create_review/', views.create_review, name='create_review'),
     path('adminas/user_list/', views.user_list, name='user_list'),
     path('adminas/update_role/<int:user_id>/', views.update_user_role, name='update_user_role'),
+    path('upload/', views.upload_file, name='upload_file'),
 ]

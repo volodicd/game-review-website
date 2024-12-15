@@ -1,5 +1,9 @@
+import os
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.utils.text import slugify
+
 from .models import CustomUser, Game, Comment, Review
 
 
@@ -31,6 +35,13 @@ class CustomAuthenticationForm(AuthenticationForm):
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
+
+        def clean_image(self):
+            image = self.cleaned_data.get('image')
+            if image:
+                image.name = slugify(os.path.basename(image.name))[:50]  # Shorten file name
+            return image
+
         fields = [
             'title', 'description', 'release_date', 'developer', 'publisher',
             'genre', 'image', 'video', 'file', 'steam_app_id', 'parent_game',
