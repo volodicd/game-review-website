@@ -1,6 +1,9 @@
 import os
+from datetime import datetime
 
 from django import forms
+from google.cloud import storage
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils.text import slugify
 
@@ -33,17 +36,57 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class GameForm(forms.ModelForm):
+
+    def upload_file(self, file, content_type, blob_name):  # Added content_type parameter
+        try:
+            storage_client = storage.Client.from_service_account_json(os.environ['GOOGLE_CREDENTIALS_PATH'])
+            bucket = storage_client.get_bucket(os.environ['GS_BUCKET_NAME'])
+            blob = bucket.blob(blob_name)
+
+            content = file.read()
+
+            blob.upload_from_string(
+                content,
+                content_type=content_type
+            )
+
+            blob.make_public()
+            return blob.public_url
+
+        except Exception as e:
+            print (f"Error uploading file: {str(e)}")
+            raise
+
+    def gen_filename(self, filename):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        ext = os.path.splitext(filename)[1].lower ()  # Convert extension to lowercase
+
+        # Validate extension
+        ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        if ext not in ALLOWED_EXTENSIONS:
+            raise ValueError("Invalid file extension")
+
+        return f"{timestamp}{ext}"
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        print(f"Saving instance with image: {instance.image}")
+        # Debug
+        if self.cleaned_data.get('image'):
+            image_file = self.cleaned_data['image']
+            dest_blob = f"{settings.GS_LOCATION}/games/images/{self.gen_filename(image_file.name)}"
+            public_url = self.upload_file(image_file.file, image_file.content_type, dest_blob)
+            instance.image = public_url
+
+        if commit:
+            instance.save()
+        return instance
+
+
+
+
     class Meta:
-
         model = Game
-
-        def save(self, commit=True):
-            instance = super().save(commit=False)
-            print(f"Saving instance with image: {instance.image}")  # Debug
-            if commit:
-                instance.save()
-            return instance
-
         fields = [
             'title', 'description', 'release_date', 'developer', 'publisher',
             'genre', 'image', 'video', 'file', 'steam_app_id', 'parent_game',
